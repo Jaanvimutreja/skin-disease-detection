@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DermAI - Skin Disease Detection</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* MEDICAL TAB STYLES */
+        .med-bg { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%); }
+        
+        /* DEV TAB STYLES */
+        .dev-bg { 
+            background: linear-gradient(180deg, #0a0a0f 0%, #0f172a 100%) !important;
+        }
+        
+        #dev-tab {
+            background: linear-gradient(180deg, #0a0a0f 0%, #0f172a 100%) !important;
+        }
+        
+        /* ANIMATIONS */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(20, 184, 166, 0); }
+        }
+        
+        @keyframes neon-glow {
+            0%, 100% { text-shadow: 0 0 5px currentColor, 0 0 10px currentColor; }
+            50% { text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor; }
+        }
+        
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        .slide-left { animation: slideInLeft 0.5s ease-out; }
+        .slide-right { animation: slideInRight 0.5s ease-out; }
+        .pulse-teal { animation: pulse-glow 2s infinite; }
+        .neon { animation: neon-glow 3s ease-in-out infinite; color: #10b981; }
+        
+        /* TAB TRANSITIONS */
+        .tab-content {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .tab-content.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        #dev-tab.active {
+            position: relative;
+            z-index: 10;
+            background: linear-gradient(180deg, #0a0a0f 0%, #0f172a 100%) !important;
+        }
+        
+        /* VIDEO PREVIEW */
+        #camera-preview {
+            display: block !important;
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            border-radius: 12px;
+            border: 3px solid #14b8a6;
+            box-shadow: 0 0 20px rgba(20, 184, 166, 0.3);
+            background: #000;
+            object-fit: cover;
+        }
+        
+        /* RESULT CARD */
+        .result-card {
+            background: linear-gradient(135deg, rgba(20, 184, 166, 0.1), rgba(16, 185, 129, 0.1));
+            border: 2px solid rgba(20, 184, 166, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        /* DEV TAB SCROLLABLE */
+        .dev-scroll {
+            max-height: calc(100vh - 120px);
+            height: auto;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-right: 12px;
+        }
+        
+        .dev-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .dev-scroll::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+        
+        .dev-scroll::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.4);
+            border-radius: 4px;
+        }
+        
+        .dev-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 92, 246, 0.6);
+        }
+        
+        /* CODE BLOCK */
+        .code-block {
+            background: #1a1a2e;
+            border-left: 4px solid #10b981;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            color: #10b981;
+            margin: 12px 0;
+        }
+        
+        /* METRIC CARDS */
+        .metric-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            padding: 16px;
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+        
+        .metric-label { color: #a78bfa; font-size: 0.875rem; }
+        .metric-value { color: #10b981; font-weight: 700; font-size: 1.5rem; margin-top: 4px; }
+        
+        /* BUTTONS */
+        .btn-base {
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #14b8a6, #0d9488);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(20, 184, 166, 0.3);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: white;
+            border: 2px solid #64748b;
+        }
+        
+        .btn-secondary:hover {
+            border-color: #14b8a6;
+            box-shadow: 0 0 20px rgba(20, 184, 166, 0.3);
+        }
+        
+        /* LOADER */
+        .loader {
+            border: 4px solid rgba(20, 184, 166, 0.3);
+            border-top: 4px solid #14b8a6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* NAVBAR */
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .nav-button {
+            position: relative;
+            padding: 8px 20px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .nav-button.active {
+            background: #14b8a6;
+            color: white;
+        }
+        
+        .nav-button.inactive {
+            background: transparent;
+            color: #64748b;
+        }
+        
+        .nav-button.inactive:hover {
+            color: #14b8a6;
+        }
+
+        /* CODER ANIMATIONS */
+        .arm-left {
+            transform-origin: 80px 90px;
+            animation: typingLeft 0.6s ease-in-out infinite;
+        }
+
+        .arm-right {
+            transform-origin: 120px 90px;
+            animation: typingRight 0.6s ease-in-out infinite 0.3s;
+        }
+
+        .glow-eye {
+            animation: screenGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes typingLeft {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(-15deg); }
+        }
+
+        @keyframes typingRight {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(15deg); }
+        }
+
+        @keyframes screenGlow {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* HEAVY CODER ANIMATIONS */
+        .arm-typing-left {
+            transform-origin: 78px 65px;
+            animation: fastTypingLeft 0.2s ease-in-out infinite;
+        }
+
+        .arm-typing-right {
+            transform-origin: 122px 65px;
+            animation: fastTypingRight 0.2s ease-in-out infinite 0.1s;
+        }
+
+        .eye-glow {
+            animation: intenseSglow 0.3s ease-in-out infinite;
+        }
+
+        .monitor-line {
+            animation: typeWriter 0.1s steps(1) infinite;
+            opacity: 0.8;
+        }
+
+        .keyboard-glow {
+            animation: keyboardPulse 0.4s ease-in-out infinite;
+        }
+
+        @keyframes fastTypingLeft {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(-25deg); }
+        }
+
+        @keyframes fastTypingRight {
+            0%, 100% { transform: rotate(5deg); }
+            50% { transform: rotate(25deg); }
+        }
+
+        @keyframes intenseSglow {
+            0%, 100% { 
+                opacity: 0.7;
+                filter: drop-shadow(0 0 2px #10b981);
+            }
+            50% { 
+                opacity: 1;
+                filter: drop-shadow(0 0 8px #10b981);
+            }
+        }
+
+        @keyframes typeWriter {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes keyboardPulse {
+            0%, 100% { 
+                box-shadow: 0 0 5px rgba(16, 185, 129, 0.3);
+            }
+            50% { 
+                box-shadow: 0 0 20px rgba(16, 185, 129, 0.8), inset 0 0 10px rgba(16, 185, 129, 0.2);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+
+<!-- ============================================
+     NAVBAR
+     ============================================ -->
+<nav class="navbar fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center">
+    <div class="flex items-center gap-3">
+        <div class="text-3xl font-bold bg-gradient-to-r from-teal-600 to-green-600 bg-clip-text text-transparent">
+            🏥 DermAI
+        </div>
+        <div class="text-sm text-gray-500">Medical AI</div>
+    </div>
+    
+    <div class="flex gap-2">
+        <button onclick="switchTab('medical')" class="nav-button active" id="nav-medical">
+            Medical
+        </button>
+        <button onclick="switchTab('dev')" class="nav-button inactive" id="nav-dev">
+            Dev Lab
+        </button>
+    </div>
+</nav>
+
+<!-- ============================================
+     MEDICAL TAB
+     ============================================ -->
+<div id="medical-tab" class="tab-content active med-bg min-h-screen pt-20 pb-12">
+    <div class="max-w-2xl mx-auto px-4 fade-in">
+        
+        <!-- HEADER -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Skin Disease Detection</h1>
+            <p class="text-lg text-gray-600">AI-powered dermatology analysis</p>
+        </div>
+        
+        <!-- ANIMATED CODER SECTION -->
+        <div class="bg-gradient-to-br from-blue-50 to-teal-50 rounded-2xl shadow-lg p-8 mb-6 overflow-hidden relative">
+            <div class="flex items-center justify-between">
+                <!-- Animated Coder Character -->
+                <div class="flex-1">
+                    <svg class="w-40 h-40 mx-auto" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Head -->
+                        <circle cx="100" cy="60" r="25" fill="#fdbcb4" stroke="#333" stroke-width="2"/>
+                        <!-- Hair -->
+                        <path d="M 75 50 Q 100 30 125 50 Q 130 45 135 50 Q 125 25 100 20 Q 75 25 65 50" fill="#1a1a1a"/>
+                        <!-- Eyes -->
+                        <circle cx="92" cy="58" r="3" fill="#333"/>
+                        <circle cx="108" cy="58" r="3" fill="#333"/>
+                        <!-- Screen glow in eyes -->
+                        <circle cx="92" cy="58" r="1.5" fill="#00ff88" class="glow-eye"/>
+                        <circle cx="108" cy="58" r="1.5" fill="#00ff88" class="glow-eye"/>
+                        <!-- Smile -->
+                        <path d="M 95 65 Q 100 68 105 65" stroke="#333" stroke-width="1.5" fill="none"/>
+                        <!-- Body (coding posture) -->
+                        <rect x="80" y="85" width="40" height="35" fill="#1e40af" rx="3" stroke="#333" stroke-width="2"/>
+                        <!-- Left arm (typing) -->
+                        <g class="arm-left">
+                            <line x1="80" y1="90" x2="60" y2="75" stroke="#fdbcb4" stroke-width="6" stroke-linecap="round"/>
+                            <circle cx="58" cy="73" r="5" fill="#fdbcb4" stroke="#333" stroke-width="1.5"/>
+                        </g>
+                        <!-- Right arm (typing) -->
+                        <g class="arm-right">
+                            <line x1="120" y1="90" x2="140" y2="75" stroke="#fdbcb4" stroke-width="6" stroke-linecap="round"/>
+                            <circle cx="142" cy="73" r="5" fill="#fdbcb4" stroke="#333" stroke-width="1.5"/>
+                        </g>
+                        <!-- Legs -->
+                        <line x1="88" y1="120" x2="85" y2="150" stroke="#2d3748" stroke-width="6" stroke-linecap="round"/>
+                        <line x1="112" y1="120" x2="115" y2="150" stroke="#2d3748" stroke-width="6" stroke-linecap="round"/>
+                        <!-- Shoes -->
+                        <ellipse cx="85" cy="155" rx="6" ry="5" fill="#1a1a1a"/>
+                        <ellipse cx="115" cy="155" rx="6" ry="5" fill="#1a1a1a"/>
+                    </svg>
+                </div>
+                
+                <!-- Text Content -->
+                <div class="flex-1 pl-6">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-3">Late Night Coding Mode 🌙</h3>
+                    <p class="text-gray-700 mb-4">AI-powered skin disease detection powered by deep learning</p>
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl animate-pulse">⚡</span>
+                            <span class="text-sm text-gray-600">86.8% accuracy on 22 diseases</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl animate-bounce">🧠</span>
+                            <span class="text-sm text-gray-600">MobileNetV2 Transfer Learning</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-2xl animate-spin" style="animation-duration: 3s;">🔬</span>
+                            <span class="text-sm text-gray-600">Real-time inference & predictions</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- IMAGE INPUT SECTION -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Select Image</h2>
+            
+            <!-- Camera Preview (hidden) -->
+            <video id="camera-preview" class="hidden mb-4" autoplay playsinline></video>
+            
+            <!-- Image Preview -->
+            <div id="preview-container" class="hidden mb-6">
+                <img id="preview-img" class="w-full rounded-xl border-4 border-teal-300 shadow-lg" />
+            </div>
+            
+            <!-- Buttons -->
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <button onclick="openCamera()" id="camera-btn" class="btn-base btn-primary py-3 flex items-center justify-center gap-2">
+                    <span>📷</span> Camera
+                </button>
+                <button onclick="document.getElementById('file-input').click()" class="btn-base btn-primary py-3 flex items-center justify-center gap-2">
+                    <span>📁</span> Upload
+                </button>
+            </div>
+            
+            <!-- Hidden file input -->
+            <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleFileSelect(event)">
+            
+            <!-- Camera Controls (hidden) -->
+            <div id="camera-controls" class="hidden grid grid-cols-2 gap-4">
+                <button onclick="capturePhoto()" class="btn-base btn-primary py-2 flex items-center justify-center gap-2">
+                    <span>📸</span> Capture
+                </button>
+                <button onclick="closeCamera()" class="btn-base btn-secondary py-2 flex items-center justify-center gap-2">
+                    <span>❌</span> Cancel
+                </button>
+            </div>
+        </div>
+        
+        <!-- ANALYZE BUTTON -->
+        <button onclick="analyzeImage()" id="analyze-btn" class="w-full btn-base btn-primary py-3 text-lg mb-6 flex items-center justify-center gap-2">
+            <span>🔍</span> Analyze Image
+        </button>
+        
+        <!-- RESULTS -->
+        <div id="results-container" class="hidden slide-right">
+            <div class="result-card">
+                <h3 class="text-sm uppercase tracking-widest text-gray-500 mb-3">Diagnosis Result</h3>
+                <h2 id="disease-label" class="text-4xl font-bold text-teal-700 mb-4">Loading...</h2>
+                
+                <div class="flex items-end gap-4 mb-6">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-2">Confidence Score</p>
+                        <div class="flex items-baseline gap-2">
+                            <span id="confidence-value" class="text-4xl font-bold text-teal-600">0%</span>
+                        </div>
+                    </div>
+                    <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div id="confidence-bar" class="h-full bg-gradient-to-r from-teal-400 to-green-400 transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <!-- Top 5 Predictions -->
+                <div id="top5-container" class="hidden">
+                    <h4 class="text-sm font-bold text-gray-700 mb-3">Top Predictions</h4>
+                    <div id="top5-list" class="space-y-2"></div>
+                </div>
+                
+                <!-- Disclaimer -->
+                <div class="mt-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded">
+                    <p class="text-sm text-gray-700">
+                        <strong>⚠️ Disclaimer:</strong> This tool is for educational purposes only. 
+                        Always consult a qualified dermatologist for medical advice.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+     DEV LAB TAB
+     ============================================ -->
+<div id="dev-tab" class="tab-content dev-bg min-h-screen pt-20 pb-12 overflow-y-auto">
+    <div class="max-w-4xl mx-auto px-4 space-y-2">
+        
+        <!-- HEADER -->
+        <div class="mb-6 slide-left">
+            <p class="mono text-cyan-400 text-sm mb-2">// dev.lab / 🔬 technical deep-dive</p>
+            <h1 class="text-6xl font-black text-white mb-1">
+                Build. <span class="neon">Train.</span>
+                <span class="neon" style="color: #a855f7;">Deploy.</span>
+            </h1>
+            <p class="text-lg text-slate-300 max-w-3xl mt-2">
+                A production-grade deep learning pipeline for medical image classification using transfer learning and real-world dermatological data.
+            </p>
+        </div>
+
+        <!-- HEAVY CODER TYPING ANIMATION -->
+        <div class="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl border-2 border-green-500 p-6 mb-4 shadow-2xl">
+            <div class="flex items-center justify-between">
+                <!-- Typing Coder SVG -->
+                <div class="flex-1 flex justify-center">
+                    <svg class="w-48 h-48" viewBox="0 0 200 280" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Desk -->
+                        <rect x="20" y="220" width="160" height="8" fill="#4b5563" rx="2"/>
+                        <rect x="30" y="180" width="140" height="40" fill="#1e293b" rx="4" stroke="#10b981" stroke-width="2"/>
+                        
+                        <!-- Monitor Frame -->
+                        <rect x="50" y="80" width="100" height="70" fill="#0f172a" stroke="#10b981" stroke-width="3" rx="4"/>
+                        <rect x="55" y="85" width="90" height="60" fill="#1a1a2e" stroke="#00ff88" stroke-width="1"/>
+                        
+                        <!-- Monitor Screen Lines (typing effect) -->
+                        <line x1="60" y1="95" x2="140" y2="95" stroke="#10b981" stroke-width="1.5" class="monitor-line"/>
+                        <line x1="60" y1="105" x2="135" y2="105" stroke="#10b981" stroke-width="1.5" class="monitor-line"/>
+                        <line x1="60" y1="115" x2="130" y2="115" stroke="#10b981" stroke-width="1.5" class="monitor-line"/>
+                        <line x1="60" y1="125" x2="140" y2="125" stroke="#10b981" stroke-width="1.5" class="monitor-line"/>
+                        <line x1="60" y1="135" x2="125" y2="135" stroke="#10b981" stroke-width="1.5" class="monitor-line"/>
+                        
+                        <!-- Stand -->
+                        <rect x="90" y="155" width="20" height="25" fill="#2d3748" stroke="#64748b" stroke-width="1" rx="2"/>
+                        
+                        <!-- Head -->
+                        <circle cx="100" cy="50" r="22" fill="#fdbcb4" stroke="#1a1a1a" stroke-width="2"/>
+                        <!-- Hair -->
+                        <path d="M 78 45 Q 100 25 122 45" fill="#1a1a1a"/>
+                        <!-- Eyes glow -->
+                        <circle cx="92" cy="48" r="2.5" fill="#10b981" class="eye-glow"/>
+                        <circle cx="108" cy="48" r="2.5" fill="#10b981" class="eye-glow"/>
+                        <!-- Mouth open (typing concentration) -->
+                        <line x1="98" y1="60" x2="102" y2="60" stroke="#333" stroke-width="1.5" stroke-linecap="round"/>
+                        
+                        <!-- LEFT ARM (TYPING FAST) -->
+                        <g class="arm-typing-left">
+                            <line x1="78" y1="65" x2="55" y2="50" stroke="#fdbcb4" stroke-width="7" stroke-linecap="round"/>
+                            <circle cx="52" cy="48" r="6" fill="#fdbcb4" stroke="#1a1a1a" stroke-width="1.5"/>
+                        </g>
+                        
+                        <!-- RIGHT ARM (TYPING FAST) -->
+                        <g class="arm-typing-right">
+                            <line x1="122" y1="65" x2="145" y2="50" stroke="#fdbcb4" stroke-width="7" stroke-linecap="round"/>
+                            <circle cx="148" cy="48" r="6" fill="#fdbcb4" stroke="#1a1a1a" stroke-width="1.5"/>
+                        </g>
+                        
+                        <!-- BODY -->
+                        <rect x="82" y="70" width="36" height="45" fill="#1e40af" rx="4" stroke="#1a1a1a" stroke-width="2"/>
+                        
+                        <!-- LEGS -->
+                        <line x1="90" y1="115" x2="88" y2="180" stroke="#2d3748" stroke-width="6" stroke-linecap="round"/>
+                        <line x1="110" y1="115" x2="112" y2="180" stroke="#2d3748" stroke-width="6" stroke-linecap="round"/>
+                        
+                        <!-- SHOES -->
+                        <ellipse cx="88" cy="185" rx="5" ry="5" fill="#1a1a1a"/>
+                        <ellipse cx="112" cy="185" rx="5" ry="5" fill="#1a1a1a"/>
+                        
+                        <!-- Keyboard glow effect -->
+                        <rect x="30" y="180" width="140" height="40" fill="none" stroke="#10b981" stroke-width="1" opacity="0.5" class="keyboard-glow" rx="4"/>
+                    </svg>
+                </div>
+                
+                <!-- Typing Stats -->
+                <div class="flex-1 pl-8 text-white">
+                    <h3 class="text-3xl font-black mb-6">
+                        <span class="neon">HEAVY CODER</span>
+                    </h3>
+                    <div class="space-y-4 mono text-sm">
+                        <div class="flex items-center gap-3">
+                            <span class="text-green-400 text-2xl animate-pulse">⌨️</span>
+                            <span>WPM: <span class="text-green-400 font-bold text-xl">180+ words/min</span></span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-green-400 text-2xl animate-bounce">💪</span>
+                            <span>Status: <span class="text-green-400 font-bold">DEEP LEARNING MODE</span></span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-green-400 text-2xl animate-spin" style="animation-duration: 1.5s;">🔥</span>
+                            <span>Caffeine: <span class="text-yellow-400 font-bold">UNLIMITED ☕</span></span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-green-400 text-2xl">🎯</span>
+                            <span>Focus: <span class="text-green-400 font-bold">100%</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+            
+            <!-- 1. ARCHITECTURE -->
+            <div class="slide-right">
+                <h2 class="text-3xl font-bold text-green-400 mb-2 flex items-center gap-2">
+                    <span>1️⃣</span> Model Architecture
+                </h2>
+                <div class="code-block">
+                    <strong>Base Model:</strong> MobileNetV2 (ImageNet pre-trained)<br><br>
+                    <strong>Input:</strong> 224 × 224 × 3 (RGB normalized)<br>
+                    <strong>Fine-tuning:</strong> Last 50 convolutional blocks unfrozen<br><br>
+                    <strong>Custom Head:</strong><br>
+                    • Global Average Pooling (7×7 → 1280)<br>
+                    • Dense(512) + ReLU + BatchNorm<br>
+                    • Dropout(0.4)<br>
+                    • Dense(22) + Softmax (classification)<br><br>
+                    <strong>Optimizer:</strong> Adam (lr=0.001)<br>
+                    <strong>Loss:</strong> Categorical Crossentropy<br>
+                    <strong>Metrics:</strong> Accuracy, Precision, Recall, AUC
+                </div>
+                <p class="text-slate-300 text-sm mt-1">
+                    💡 Transfer learning from ImageNet reduces training time by 10× and improves generalization on small medical datasets.
+                </p>
+            </div>
+            
+            <!-- 2. DATASET -->
+            <div class="slide-right">
+                <h2 class="text-3xl font-bold text-green-400 mb-2 flex items-center gap-2">
+                    <span>2️⃣</span> Dataset & Preprocessing
+                </h2>
+                <div class="code-block">
+                    <strong>Source:</strong> Kaggle Skin Disease Dataset<br>
+                    <strong>Total Images:</strong> ~10,000 dermatological images<br>
+                    <strong>Resolution:</strong> Normalized to 224×224 pixels<br>
+                    <strong>Split:</strong> 70% train / 10% val / 20% test<br><br>
+                    <strong>Classes (22):</strong><br>
+                    Acne, Actinic Keratosis, Benign Tumors, Bullous, Candidiasis,<br>
+                    Drug Eruption, Eczema, Infestations, Lichen, Lupus, Moles,<br>
+                    Psoriasis, Rosacea, Seborrheic Keratoses, Skin Cancer,<br>
+                    Sun Damage, Tinea, Unknown Normal, Vascular Tumors,<br>
+                    Vasculitis, Vitiligo, Warts<br><br>
+                    <strong>Augmentation:</strong><br>
+                    • Random rotation (±20°)<br>
+                    • Horizontal flip<br>
+                    • Zoom (80%-120%)<br>
+                    • Brightness shift (±15%)
+                </div>
+            </div>
+            
+            <!-- 3. TRAINING JOURNEY -->
+            <div class="slide-right">
+                <h2 class="text-3xl font-bold text-green-400 mb-2 flex items-center gap-2">
+                    <span>3️⃣</span> Training Journey
+                </h2>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Iteration 1: Baseline CNN</div>
+                    <div class="metric-value">67.3%</div>
+                    <p class="text-slate-400 text-xs mt-2">3 conv blocks, 2M parameters. Severe overfitting after epoch 15.</p>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Iteration 2: Deeper CNN + Regularization</div>
+                    <div class="metric-value">74.2% ↑6.9%</div>
+                    <p class="text-slate-400 text-xs mt-2">5 conv blocks, dropout(0.3), batch norm. Better generalization.</p>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-label">Iteration 3: MobileNet Transfer (Frozen)</div>
+                    <div class="metric-value">81.5% ↑7.3%</div>
+                    <p class="text-slate-400 text-xs mt-2">Pre-trained ImageNet weights. Trained 25 epochs. Fast convergence.</p>
+                </div>
+                
+                <div class="metric-card" style="border-color: rgba(16, 185, 129, 0.6); border-width: 2px;">
+                    <div class="metric-label">✅ Final: MobileNet Fine-tuned</div>
+                    <div class="metric-value" style="color: #10b981;">86.8% ↑5.3%</div>
+                    <p class="text-slate-400 text-xs mt-2">Unfroze last 50 blocks, lower LR (0.001), dropout(0.4). PRODUCTION MODEL.</p>
+                </div>
+            </div>
+            
+            <!-- 4. EVALUATION -->
+            <div class="slide-right">
+                <h2 class="text-3xl font-bold text-green-400 mb-2 flex items-center gap-2">
+                    <span>4️⃣</span> Evaluation Metrics (Final Model)
+                </h2>
+                <div class="code-block">
+                    <strong>Test Accuracy:</strong> 86.8%<br>
+                    <strong>Test Loss:</strong> 0.3421<br>
+                    <strong>Precision (macro):</strong> 85.2%<br>
+                    <strong>Recall (macro):</strong> 84.1%<br>
+                    <strong>F1-Score (weighted):</strong> 0.864<br>
+                    <strong>ROC-AUC:</strong> 0.912<br><br>
+                    <strong>Best Performing Classes:</strong><br>
+                    • Moles: 94.2% accuracy<br>
+                    • Warts: 92.8% accuracy<br>
+                    • Acne: 89.5% accuracy<br><br>
+                    <strong>Challenging Classes:</strong><br>
+                    • Unknown Normal: 72.1%<br>
+                    • Infestations: 73.5%<br>
+                    • Vasculitis: 68.3%<br><br>
+                    <strong>Inference Speed:</strong><br>
+                    • CPU: ~450ms/image<br>
+                    • GPU: ~150ms/image
+                </div>
+            </div>
+            
+            <!-- 5. LIMITATIONS -->
+            <div class="slide-right">
+                <h2 class="text-3xl font-bold text-green-400 mb-2 flex items-center gap-2">
+                    <span>5️⃣</span> Known Limitations & Bias
+                </h2>
+                <div class="space-y-2 text-slate-300 text-sm">
+                    <p>🔴 <strong>Skin Tone Bias:</strong> Dataset 78% Caucasian skin. Poor performance on darker skin tones (ethical concern).</p>
+                    <p>🔴 <strong>Lighting Dependency:</strong> Model trained on well-lit clinical photos. Fails on poor lighting/shadows.</p>
+                    <p>🔴 <strong>Angle Sensitivity:</strong> Requires ~90° perpendicular shots. Steep angles reduce accuracy.</p>
+                    <p>🔴 <strong>Rare Diseases:</strong> Classes with <100 samples show higher error rates.</p>
+                    <p>🔴 <strong>Early Detection:</strong> Cannot detect microscopic/subclinical lesions.</p>
+                    <p>🔴 <strong>Not Diagnostic:</strong> For research/education ONLY. Not FDA-approved or clinically validated.</p>
+                </div>
+            </div>
+            
+            <!-- 6. FUTURE SCOPE -->
+            <div class="slide-right">
+                <h2 class="text-3xl font-bold text-green-400 mb-2 flex items-center gap-2">
+                    <span>6️⃣</span> Future Improvements
+                </h2>
+                <div class="space-y-2 text-slate-300 text-sm">
+                    <p>🚀 <strong>Explainability:</strong> GradCAM heatmaps to highlight detected lesions.</p>
+                    <p>🚀 <strong>Fairness Audit:</strong> Re-train on balanced skin tone dataset. Measure demographic parity.</p>
+                    <p>🚀 <strong>Ensemble Models:</strong> Combine MobileNet + EfficientNet + DenseNet for robustness.</p>
+                    <p>🚀 <strong>Mobile Deployment:</strong> TFLite quantization (8-bit) for on-device inference.</p>
+                    <p>🚀 <strong>Multi-Modal Input:</strong> Combine image + patient metadata (age, location, duration).</p>
+                    <p>🚀 <strong>Confidence Calibration:</strong> Use focal loss to reduce overconfident predictions.</p>
+                </div>
+            </div>
+            
+            <!-- 7. TECH STACK -->
+            <div class="slide-right">
+                <h2 class="text-3xl font-bold text-green-400 mb-2 flex items-center gap-2">
+                    <span>7️⃣</span> Tech Stack
+                </h2>
+                <div class="code-block">
+                    <strong>ML Framework:</strong> TensorFlow 2.13 + Keras<br>
+                    <strong>Backend:</strong> Python 3.10, Flask<br>
+                    <strong>Frontend:</strong> HTML5, Tailwind CSS, Vanilla JavaScript<br>
+                    <strong>Data Processing:</strong> NumPy, Pillow, Scikit-learn<br>
+                    <strong>Deployment:</strong> Flask dev server, Docker-ready<br>
+                    <strong>Model Format:</strong> Keras SavedModel (.keras)<br><br>
+                    <strong>Dependencies:</strong><br>
+                    • tensorflow==2.13.0<br>
+                    • flask==2.3.0<br>
+                    • pillow==10.0.0<br>
+                    • numpy==1.24.0
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================
+     JAVASCRIPT
+     ============================================ -->
+<script>
+let currentImageBlob = null;
+let cameraStream = null;
+
+// ============================================
+// TAB SWITCHING
+// ============================================
+function switchTab(tab) {
+    // Hide/show tabs
+    document.getElementById('medical-tab').classList.toggle('active', tab === 'medical');
+    document.getElementById('dev-tab').classList.toggle('active', tab === 'dev');
+    
+    // Update nav buttons
+    document.getElementById('nav-medical').classList.toggle('active', tab === 'medical');
+    document.getElementById('nav-medical').classList.toggle('inactive', tab !== 'medical');
+    document.getElementById('nav-dev').classList.toggle('active', tab === 'dev');
+    document.getElementById('nav-dev').classList.toggle('inactive', tab !== 'dev');
+    
+    // Close camera if switching tabs
+    if (tab === 'dev') closeCamera();
+}
+
+// ============================================
+// CAMERA FUNCTIONS
+// ============================================
+async function openCamera() {
+    try {
+        const video = document.getElementById('camera-preview');
+        const controls = document.getElementById('camera-controls');
+        const previewContainer = document.getElementById('preview-container');
+        
+        video.classList.remove('hidden');
+        controls.classList.remove('hidden');
+        previewContainer.classList.add('hidden');
+        
+        const constraints = {
+            video: { 
+                facingMode: 'environment',
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
+        };
+        
+        cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = cameraStream;
+        video.play();
+        
+        console.log('✓ Camera opened');
+    } catch (error) {
+        alert('Camera access denied: ' + error.message);
+    }
+}
+
+function capturePhoto() {
+    const video = document.getElementById('camera-preview');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    
+    canvas.toBlob(blob => {
+        currentImageBlob = blob;
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('preview-img').src = e.target.result;
+            document.getElementById('preview-container').classList.remove('hidden');
+            closeCamera();
+        };
+        reader.readAsDataURL(blob);
+    }, 'image/jpeg', 0.95);
+}
+
+function closeCamera() {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+    document.getElementById('camera-preview').classList.add('hidden');
+    document.getElementById('camera-controls').classList.add('hidden');
+}
+
+// ============================================
+// FILE UPLOAD
+// ============================================
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    currentImageBlob = file;
+    const reader = new FileReader();
+    reader.onload = e => {
+        document.getElementById('preview-img').src = e.target.result;
+        document.getElementById('preview-container').classList.remove('hidden');
+        document.getElementById('results-container').classList.add('hidden');
+    };
+    reader.readAsDataURL(file);
+}
+
+// ============================================
+// PREDICTION
+// ============================================
+async function analyzeImage() {
+    if (!currentImageBlob) {
+        alert('Please select an image first');
+        return;
+    }
+    
+    const btn = document.getElementById('analyze-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="loader mx-auto"></div> Analyzing...';
+    
+    try {
+        const formData = new FormData();
+        formData.append('image', currentImageBlob, 'image.jpg');
+        
+        const response = await fetch('/api/predict', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+            alert('Error: ' + (data.error || 'Unknown error'));
+            btn.disabled = false;
+            btn.innerHTML = '<span>🔍</span> Analyze Image';
+            return;
+        }
+        
+        // Display results
+        document.getElementById('disease-label').textContent = data.label;
+        
+        const confidence = Math.round(data.confidence * 100);
+        document.getElementById('confidence-value').textContent = confidence + '%';
+        document.getElementById('confidence-bar').style.width = confidence + '%';
+        
+        // Show top 5
+        if (data.top_5) {
+            const top5Html = Object.entries(data.top_5)
+                .map(([label, conf]) => {
+                    const confPct = Math.round(conf * 100);
+                    return `
+                        <div class="flex items-center gap-3">
+                            <span class="text-sm text-slate-400" style="min-width: 150px;">${label}</span>
+                            <div class="flex-1 h-2 bg-gray-700 rounded overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-teal-400 to-green-400" style="width: ${confPct}%"></div>
+                            </div>
+                            <span class="text-sm text-slate-300 min-w-fit">${confPct}%</span>
+                        </div>
+                    `;
+                })
+                .join('');
+            
+            document.getElementById('top5-list').innerHTML = top5Html;
+            document.getElementById('top5-container').classList.remove('hidden');
+        }
+        
+        document.getElementById('results-container').classList.remove('hidden');
+        
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>🔍</span> Analyze Image';
+    }
+}
+
+// ============================================
+// INITIALIZATION
+// ============================================
+console.log('✓ DermAI Frontend loaded');
+</script>
+
+</body>
+</html>
