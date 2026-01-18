@@ -1,6 +1,7 @@
 """
 DermAI - Skin Disease Detection App
 Flask Backend with TensorFlow Model Integration
+Production-Ready for Render Deployment
 """
 
 from flask import Flask, send_file, request, jsonify
@@ -25,8 +26,13 @@ logger = logging.getLogger(__name__)
 # LOAD MODEL (ONCE AT STARTUP)
 # ============================================
 try:
-    MODEL = tf.keras.models.load_model("final_skin_disease_model.keras")
-    logger.info("✓ Model loaded successfully")
+    model_path = os.environ.get('MODEL_PATH', 'final_skin_disease_model.keras')
+    if os.path.exists(model_path):
+        MODEL = tf.keras.models.load_model(model_path)
+        logger.info("✓ Model loaded successfully")
+    else:
+        logger.warning(f"Model not found at {model_path}")
+        MODEL = None
 except Exception as e:
     logger.error(f"✗ Failed to load model: {str(e)}")
     MODEL = None

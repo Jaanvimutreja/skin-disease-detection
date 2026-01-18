@@ -28,6 +28,16 @@ ENV/
 # IDE
 .vscode/
 .idea/
+
+# Model cache (large files - exclude from Git)
+final_skin_disease_model.keras
+*.keras
+*.h5
+.cache/
+
+# Environment variables
+.env
+.env.local
 *.swp
 *.swo
 *~
