@@ -21,6 +21,6 @@ print("\nDisease classes found:\n")
 for disease in os.listdir(data_dir):
     disease_path = os.path.join(data_dir, disease)
     if os.path.isdir(disease_path):
-        print(disease, ":", len(os.listdir(disease_path)), "images")
+        print(disease, ":", len(os.listdir(disease_path)))
 
 print("\nDataset structure verified correctly.")

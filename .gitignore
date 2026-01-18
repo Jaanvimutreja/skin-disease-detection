@@ -41,3 +41,9 @@ Thumbs.db
 *.xlsx
 *.xls
 .cache/
+
+# Large Model Files
+*.h5
+*.pkl
+*.pth
+*.pt
